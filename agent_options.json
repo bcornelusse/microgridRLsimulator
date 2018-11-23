@@ -1,0 +1,8 @@
+{
+  "DQN": {
+    "learning_rate": 0.008,
+    "eps": 0.5,
+    "eps_decay": 0.9986,
+    "n_episodes": 20
+  }
+}

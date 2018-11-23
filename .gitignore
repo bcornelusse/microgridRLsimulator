@@ -1,0 +1,11 @@
+docs/_build
+examples/results
+models/
+log/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+mgenv
+results
+.idea/
