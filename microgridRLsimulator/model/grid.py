@@ -1,5 +1,7 @@
 from .load import Load
 from .storage import Storage
+from .DCAstorage import DCAStorage
+
 from .generator import Generator
 
 
@@ -15,9 +17,10 @@ class Grid:
         """
         self.loads = [Load(l["name"], l["capacity"]) for l in data["loads"]]
         self.generators = [Generator(g["name"], g) for g in data["generators"]]
-        self.storages = [Storage(s["name"], s) for s in data["storages"]]
+        STORAGE_TYPES = {Storage.type(): Storage, DCAStorage.type(): DCAStorage}
+        self.storages = [STORAGE_TYPES[s["type"]](s["name"], s) for s in data["storages"]] # Get the storage type from dict and create appropriate storage type
 
-        self.period_duration = data["period_duration"]  # TODO period_duration to a config file?
+        self.period_duration = data["period_duration"] / 60  # minutes -> hours
 
         self.curtailement_price = data["curtailement_price"]
         self.load_shedding_price = data["load_shedding_price"]

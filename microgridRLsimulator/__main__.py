@@ -12,9 +12,11 @@ where
 Options:
     -h                          Display this help.
     -o PATH                     Output path.
-    --from_date DATETIME        Start of simulation datetime [Default: 2015-01-01T00:00:00].
-    --to_date DATETIME          End of simulation datetime [Default: 2015-01-02T00:00:00].
-    --agent AGENT               Type of agent to use for simulation (Idle, DQN) [Default: Idle].
+    --train_from_date DATETIME  Start of training simulation datetime [Default: 2016-01-01T00:00:00].
+    --train_to_date DATETIME    End of training simulation datetime [Default: 2016-01-02T00:00:00].
+    --test_from_date DATETIME   Start of testing simulation datetime [Default: 2016-01-01T00:00:00].
+    --test_to_date DATETIME     End of testing simulation datetime [Default: 2016-01-02T00:00:00].
+    --agent AGENT               Type of agent to use for simulation (Idle, DQN, Random, Heuristic) [Default: Heuristic].
     --agent_options OPTIONS     Path to Json with options for the selected agent
     --agent_file AGENT_FILE     Path to a Python file of a custom agent. This parameter overrides --agent parameter when specified.
     --log_level LEVEL           Set logging level (debug, info, warning, critical) [Default: info].
@@ -23,6 +25,8 @@ Options:
 import os
 from microgridRLsimulator.agent.IdleAgent import IdleAgent
 from microgridRLsimulator.agent.DQNAgent import DQNAgent
+from microgridRLsimulator.agent.RandomAgent import RandomAgent
+from microgridRLsimulator.agent.HeuristicAgent import HeuristicAgent
 from microgridRLsimulator.simulate.simulator import Simulator
 from docopt import docopt
 import logging
@@ -31,8 +35,8 @@ import json
 import importlib
 
 
-AGENT_TYPES = {IdleAgent.name(): IdleAgent, DQNAgent.name(): DQNAgent}
-DEFAULT_CONTROLLER = IdleAgent
+AGENT_TYPES = {IdleAgent.name(): IdleAgent, DQNAgent.name(): DQNAgent, RandomAgent.name(): RandomAgent, HeuristicAgent.name(): HeuristicAgent}
+DEFAULT_CONTROLLER = HeuristicAgent
 
 if __name__ == '__main__':
     # Parse command line arguments
@@ -52,11 +56,14 @@ if __name__ == '__main__':
     # Create logger
     logger = logging.getLogger(__name__)  #: Logger.
 
-    # Create the simulation environment
+    # Create the training  and the testing simulation environments
     case = args['<case>']
-    start_date = isoparse(args['--from_date'])
-    end_date = isoparse(args['--to_date'])
-    SimulationEnvironment = Simulator(start_date, end_date, case)
+    train_start_date = isoparse(args['--train_from_date'])
+    train_end_date = isoparse(args['--train_to_date'])
+    test_start_date = isoparse(args['--test_from_date'])
+    test_end_date = isoparse(args['--test_to_date'])
+    TrainSimulationEnvironment = Simulator(train_start_date, train_end_date, case)
+    TestSimulationEnvironment = Simulator(test_start_date, test_end_date, case)
 
     # Configure the agent (--agent case)
     if args['--agent_file'] is None:
@@ -85,7 +92,10 @@ if __name__ == '__main__':
     else:
         agent_options = {}
 
-    agent = agent_type(SimulationEnvironment, **agent_options)
+    agent = agent_type(TrainSimulationEnvironment, **agent_options)
 
     # Run the experiment
-    agent.run()
+        
+    agent.train_agent()
+    agent.set_environment(TestSimulationEnvironment)
+    agent.simulate_agent()

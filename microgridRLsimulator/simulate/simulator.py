@@ -16,7 +16,7 @@ from microgridRLsimulator.utils import positive, negative
 
 
 class Simulator:
-    def __init__(self, start_date, end_date, case, decision_horizon=1):
+    def __init__(self, start_date, end_date, case):
         """
         :param start_date: datetime for the start of the simulation
         :param end_date: datetime for the end of the simulation
@@ -24,22 +24,32 @@ class Simulator:
         :param decision_horizon:
         """
 
-        MICROGRID_CONFIG_FILE = "examples/data/%s.json" % case
-        MICROGRID_DATA_FILE = 'examples/data/%s_dataset.csv' % case
+        MICROGRID_CONFIG_FILE = "examples/data/%s/%s.json" % (case, case)
+        MICROGRID_DATA_FILE = 'examples/data/%s/%s_dataset.csv' % (case, case)
         self.RESULTS_FOLDER = "results/results_%s_%s" % (
             case, datetime.now().strftime('%Y-%m-%d_%H%M%S'))
         self.RESULTS_FILE = "%s/%s_out.json" % (self.RESULTS_FOLDER, case)
 
         with open(MICROGRID_CONFIG_FILE, 'rb') as jsonFile:
-            data = json.load(jsonFile)
-            self.grid = Grid(data)
+            self.data = json.load(jsonFile)
+            self.grid = Grid(self.data)
+            self.objectives = self.data["objectives"]
+
+        for k in self.objectives.values():
+            assert isinstance(k, bool)
 
         self.case = case
         self.database = Database(MICROGRID_DATA_FILE, self.grid)
         self.actions = {}
         self.start_date = start_date
         self.end_date = end_date
-        self.date_range = pd.date_range(start=start_date, end=end_date, freq=str(decision_horizon) + 'h')
+        data_start_date = self.database.data_frame.first_valid_index()
+        data_end_date = self.database.data_frame.last_valid_index()
+        assert (self.start_date < self.end_date), "The end date is before the start date."
+        assert (data_start_date <= self.start_date < data_end_date) , "Invalid start date."
+        assert (data_start_date < self.end_date <= data_end_date) , "Invalid end date."
+        self.date_range = pd.date_range(start=start_date, end=end_date,
+                                        freq=str(int(self.grid.period_duration * 60)) + 'min')
         self.high_level_actions = self._infer_high_level_actions()
 
         self.env_step = 0
@@ -55,10 +65,10 @@ class Simulator:
         self.actions = {}
         self.env_step = 0
         self.cumulative_cost = 0.
-
+        self.grid = Grid(self.data) # refresh the grid (storage capacity, number of cycles, etc)
         # Initialize a gridstate
         self.grid_states = [GridState(self.grid, self.start_date)]
-
+        self.grid_states[-1].cumulative_cost = self.cumulative_cost
         realized_non_flexible_production = 0.0
         for g in self.grid.generators:
             if not g.steerable:
@@ -96,12 +106,12 @@ class Simulator:
         is_terminal = False
         if self.env_step == len(self.date_range) - 1:
             is_terminal = True
-        p_dt = dt + timedelta(hours=1)
+        p_dt = self.date_range[self.env_step]  # It's the next step
 
         # Construct an empty next state
         next_grid_state = GridState(self.grid, p_dt)
 
-        ## Apply the control actions
+        # Apply the control actions
         n_storages = len(self.grid.storages)
 
         # Compute next state of storage devices based on the control actions
@@ -111,9 +121,11 @@ class Simulator:
         actual_discharge = [0.0] * n_storages
         for b in range(n_storages):
             (next_soc[b], actual_charge[b], actual_discharge[b]) = self.grid.storages[b].simulate(
-                self.grid_states[-1].state_of_charge[b], actions.charge[b], actions.discharge[b]
+                self.grid_states[-1].state_of_charge[b], actions.charge[b], actions.discharge[b],
+                self.grid.period_duration
             )
-            # Store the computed level of storage to the next state
+            # Store the computed capacity and level of storage to the next state
+            next_grid_state.capacities[b] = self.grid.storages[b].capacity
             next_grid_state.state_of_charge[b] = next_soc[b]
 
         # Record the control actions for the storage devices to the current state
@@ -167,18 +179,27 @@ class Simulator:
         self.grid_states[-1].curtailment_cost = actual_export * self.grid.curtailement_price
         self.grid_states[-1].load_not_served_cost = actual_import * self.grid.load_shedding_price
 
-        self.grid_states[-1].total_cost = self.grid_states[-1].load_not_served_cost + self.grid_states[
-            -1].curtailment_cost + self.grid_states[-1].fuel_cost
+        self.grid_states[-1].total_cost = self.grid_states[-1].load_not_served_cost + \
+                                          self.grid_states[-1].curtailment_cost + self.grid_states[-1].fuel_cost
+
+        multiobj = {'total_cost': self.grid_states[-1].total_cost,
+                    'load_shedding': actual_import,
+                    'fuel_cost': self.grid_states[-1].fuel_cost,
+                    'curtailment': actual_export,
+                    'storage_maintenance': {self.grid.storages[b].name: self.grid.storages[b].n_cycles for b in range(n_storages)}
+                    }
 
         self.cumulative_cost += self.grid_states[-1].total_cost
-        self.grid_states[-1].cum_total_cost = self.cumulative_cost
-
+        next_grid_state.cum_total_cost = self.cumulative_cost
         # Add in the next state the information about renewable generation and demand
         # Note: here production refers only to the non-steerable production
         realized_non_flexible_production = 0.0
         for g in self.grid.generators:
             if not g.steerable:
-                realized_non_flexible_production += self.database.get_columns(g.name, p_dt)
+                time = self.env_step * self.grid.period_duration * 60 # time in min (in order to be able to update capacity all min)
+                g.update_capacity(time)
+                realized_non_flexible_production += self.database.get_columns(g.name, p_dt) * (g.capacity / g.initial_capacity)
+        next_grid_state.res_gen_capacities = [g.capacity for g in self.grid.generators if not g.steerable]
 
         realized_non_flexible_consumption = 0.0
         for l in self.grid.loads:
@@ -189,7 +210,7 @@ class Simulator:
         self.grid_states.append(next_grid_state)
 
         # Pass the information about the next state, cost of the previous control actions and termination condition 
-        return self._decode_state(next_grid_state), -self.grid_states[-2].total_cost, is_terminal
+        return self._decode_state(next_grid_state), self._compute_rewards(multiobj), is_terminal
 
     def store_and_plot(self, learning_results=None):
         """
@@ -201,9 +222,14 @@ class Simulator:
 
         results = dict(dates=["%s" % d.date_time for d in self.grid_states],
                        soc=[d.state_of_charge for d in self.grid_states],
+                       capacity=[d.capacities for d in self.grid_states],
+                       res_gen_capacity=[d.res_gen_capacities for d in self.grid_states], 
                        charge=[d.charge for d in self.grid_states],
                        discharge=[d.discharge for d in self.grid_states],
                        generation=[d.generation for d in self.grid_states],
+                       fuel_cost=[d.fuel_cost for d in self.grid_states],
+                       curtailment_cost=[d.curtailment_cost for d in self.grid_states],
+                       load_not_served_cost=[d.load_not_served_cost for d in self.grid_states],
                        cum_total_cost=[d.cum_total_cost for d in self.grid_states],
                        energy_cost=[d.total_cost for d in self.grid_states],
                        production=[d.production for d in self.grid_states],
@@ -245,11 +271,11 @@ class Simulator:
         making process.
 
         :param gridstate: Gridstate object that contains the whole information about the micro-grid
-        :return: list of the type [ non_flex_consumption , [state_of_charge_0, state_of_charge_1,...] , non_flex_production]
+        :return: list of the type [ non_flex_consumption , [state_of_charge_0, state_of_charge_1,...] , non_flex_production, date_time]
         """
-
-        return [gridstate.non_steerable_consumption, gridstate.state_of_charge, gridstate.non_steerable_production] # TODO AgentState object?
-
+        return [gridstate.non_steerable_consumption, gridstate.state_of_charge,
+                gridstate.non_steerable_production, gridstate.date_time]  # TODO AgentState object?
+    
     def _construct_action(self, high_level_action, state):
         """
         Maps the  high level action provided by the agent into an action implementable by the simulator.
@@ -274,7 +300,25 @@ class Simulator:
         # a) if it is positive there is excess of energy
         # b) if it is negative there is deficit
         net_generation = non_flex_production - consumption
+        if negative(net_generation): 
+            # check if genset has to be active, if it is the case: activation at the min stable capacity and update the net generation. 
+            total_possible_discharge = 0.0
+            genset_total_capacity = 0.0
+            genset_min_stable_total_capacity = 0.0
+            storages_to_discharge = [i for i, x in enumerate(self.high_level_actions[high_level_action]) if x == "D"]
+            for b in storages_to_discharge:
+                storage = self.grid.storages[b]
+                total_possible_discharge += min(state_of_charge[b] * storage.discharge_efficiency / d, storage.max_discharge_rate)
 
+            
+            for g in self.grid.generators: # TODO sort generators
+                if g.steerable:
+                    if net_generation + total_possible_discharge + genset_total_capacity < 0:
+                        genset_min_stable_total_capacity += g.min_stable_generation * g.capacity
+                        genset_total_capacity += g.capacity
+                        generation[g] = g.min_stable_generation * g.capacity
+
+            net_generation += genset_min_stable_total_capacity # net generation takes into account the min stable production
         if positive(net_generation):
             storages_to_charge = [i for i, x in enumerate(self.high_level_actions[high_level_action]) if x == "C"]
             # if there is excess, charge the storage devices that are in Charge mode by the controller
@@ -282,7 +326,8 @@ class Simulator:
                 storage = self.grid.storages[b]
                 soc = state_of_charge[b]
                 empty_space = storage.capacity - soc
-                charge[b] = min(empty_space / d, net_generation / d, storage.max_charge_rate)
+                charge[b] = min(empty_space / (d * storage.charge_efficiency), net_generation,
+                                storage.max_charge_rate)  # net_generation is already in kW
                 net_generation -= charge[b]
         elif negative(net_generation):
             storages_to_discharge = [i for i, x in enumerate(self.high_level_actions[high_level_action]) if x == "D"]
@@ -290,11 +335,24 @@ class Simulator:
             for b in storages_to_discharge:
                 storage = self.grid.storages[b]
                 soc = state_of_charge[b]
-                discharge[b] = min(soc / d, -net_generation / d, storage.max_charge_rate)
+                discharge[b] = min(soc * storage.discharge_efficiency / d, -net_generation,
+                                   storage.max_discharge_rate)  # discharge = soc/d is always changed to soc*effi/d in the simulation
                 net_generation += discharge[b]
-            # Use the steerable generation to supply the remaining deficit
-            for g in self.grid.generators:
-                if g.steerable:
-                    generation[g] = -net_generation
 
+            for g in self.grid.generators: # TODO sort generators 
+                if g.steerable:
+                    additional_generation = min(-net_generation, g.capacity - generation[g])
+                    generation[g] += additional_generation # Update the production of generator g
+                    net_generation += additional_generation # Update the remaining power to handle
         return GridAction(generation, charge, discharge)
+
+    def _compute_rewards(self, multiobj_dict):
+
+        rewards_dict = {}
+        for o, val in self.objectives.items():
+            if val:
+                rewards_dict[o] = multiobj_dict[o]
+        if len(rewards_dict) == 1: # I think it is better to always return a dict than sometimes a dict and sometimes a value
+            return -list(rewards_dict.values())[0]
+        else:
+            return rewards_dict

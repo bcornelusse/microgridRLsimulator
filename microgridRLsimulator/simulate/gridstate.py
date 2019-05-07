@@ -17,6 +17,8 @@ class GridState:
 
         # List of state of charge for all storage devices, initialized at half of their capacity
         self.state_of_charge = [s.capacity / 2.0 for s in self.grid.storages]
+        self.capacities = [s.capacity for s in self.grid.storages]
+        self.res_gen_capacities = [g.capacity for g in self.grid.generators if not g.steerable]
         self.cum_total_cost = 0.0  # EUR Cumulative total energy cost to date
         self.fuel_cost = 0.0  # EUR
         self.curtailment_cost = 0.0 # EUR

@@ -15,19 +15,29 @@ class Generator(Device):
         self.capacity = None
         self.steerable = False
         self.min_stable_generation = None
+        self.diesel_price = None  # €/kWh
+        self.initial_capacity = params["capacity"]
+        self.operating_point = None
 
         # In oder to determine the efficiency we need two operating points
         # It is considered that the fuel curve is linear (HOMER)
         self.first_point = [75, 22.5]  # consumes 22.5 l/h at a generation of 75 kW
         self.second_point = [25, 10.5]  # consumes 10.5 l/h at a generation of 25 kW
 
-        self.diesel_price = 1  # €/kWh
-
         for k in params.keys():
             if k in self.__dict__.keys():
                 self.__setattr__(k, params[k])
 
         assert (self.capacity is not None)
+
+    def update_capacity(self, time):
+        """
+
+        Decrease the generator capacity over time using a linear function.
+
+        :return: Nothing, updates the generator capacity.
+        """
+        self.capacity = self.initial_capacity * (self.operating_point[1] - 1) * time / (24 * 60 * self.operating_point[0]) + self.initial_capacity
 
     def simulate_generator(self, production):
         TOL_IS_ZERO = 1e-4
