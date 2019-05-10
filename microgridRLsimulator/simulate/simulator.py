@@ -16,19 +16,37 @@ from microgridRLsimulator.utils import positive, negative
 
 
 class Simulator:
-    def __init__(self, start_date, end_date, case, decision_horizon=1):
+    def __init__(self, start_date, end_date, case, decision_horizon=1, results_folder=None, results_file=None):
         """
         :param start_date: datetime for the start of the simulation
         :param end_date: datetime for the end of the simulation
         :param case: case name (string)
         :param decision_horizon:
+        :param results_folder: if None, set to default location
+        :param results_file: if None, set to default file
         """
 
-        MICROGRID_CONFIG_FILE = "examples/data/%s.json" % case
-        MICROGRID_DATA_FILE = 'examples/data/%s_dataset.csv' % case
-        self.RESULTS_FOLDER = "results/results_%s_%s" % (
-            case, datetime.now().strftime('%Y-%m-%d_%H%M%S'))
-        self.RESULTS_FILE = "%s/%s_out.json" % (self.RESULTS_FOLDER, case)
+        this_dir, _ = os.path.split(__file__)
+        package_dir = os.path.dirname(this_dir)
+        parent_package_dir = os.path.dirname(package_dir)
+
+
+        MICROGRID_CONFIG_FILE = os.path.join(package_dir, "data/%s.json" % case)
+        MICROGRID_DATA_FILE = os.path.join(package_dir, 'data/%s_dataset.csv' % case)
+
+        # setting results folder
+        if results_folder is None:
+            self.RESULTS_FOLDER = "results/results_%s_%s" % (
+                case, datetime.now().strftime('%Y-%m-%d_%H%M%S'))
+            self.RESULTS_FOLDER = os.path.join(parent_package_dir, self.RESULTS_FOLDER)
+        else:
+            self.RESULTS_FOLDER = results_folder
+
+        # setting results file
+        if results_file is None:
+            self.RESULTS_FILE = "%s/%s_out.json" % (self.RESULTS_FOLDER, case)
+        else:
+            self.RESULTS_FILE = results_file
 
         with open(MICROGRID_CONFIG_FILE, 'rb') as jsonFile:
             data = json.load(jsonFile)
@@ -215,7 +233,7 @@ class Simulator:
                        avg_rewards=learning_results)
 
         if not os.path.isdir(self.RESULTS_FOLDER):
-            os.mkdir(self.RESULTS_FOLDER)
+            os.makedirs(self.RESULTS_FOLDER)
 
         with open(self.RESULTS_FILE, 'w') as jsonFile:
             json.dump(results, jsonFile)
