@@ -16,19 +16,36 @@ from microgridRLsimulator.utils import positive, negative
 
 
 class Simulator:
-    def __init__(self, start_date, end_date, case):
+    def __init__(self, start_date, end_date, case,
+                 results_folder=None,
+                 results_file=None):
         """
         :param start_date: datetime for the start of the simulation
         :param end_date: datetime for the end of the simulation
         :param case: case name (string)
-        :param decision_horizon:
+        :param results_folder: if None, set to default location
+        :param results_file: if None, set to default file
         """
 
-        MICROGRID_CONFIG_FILE = "examples/data/%s/%s.json" % (case, case)
-        MICROGRID_DATA_FILE = 'examples/data/%s/%s_dataset.csv' % (case, case)
-        self.RESULTS_FOLDER = "results/results_%s_%s" % (
-            case, datetime.now().strftime('%Y-%m-%d_%H%M%S'))
-        self.RESULTS_FILE = "%s/%s_out.json" % (self.RESULTS_FOLDER, case)
+        this_dir, _ = os.path.split(__file__)
+        package_dir = os.path.dirname(this_dir)
+        parent_package_dir = os.path.dirname(package_dir)
+
+        MICROGRID_CONFIG_FILE = os.path.join(package_dir, "data", case, "%s.json" % case)
+        MICROGRID_DATA_FILE = os.path.join(package_dir, "data", case, '%s_dataset.csv' % case)
+        # setting results folder
+        if results_folder is None:
+            self.RESULTS_FOLDER = "results/results_%s_%s" % (
+                case, datetime.now().strftime('%Y-%m-%d_%H%M%S'))
+            self.RESULTS_FOLDER = os.path.join(parent_package_dir, self.RESULTS_FOLDER)
+        else:
+            self.RESULTS_FOLDER = results_folder
+
+        # setting results file
+        if results_file is None:
+            self.RESULTS_FILE = "%s/%s_out.json" % (self.RESULTS_FOLDER, case)
+        else:
+            self.RESULTS_FILE = results_file
 
         with open(MICROGRID_CONFIG_FILE, 'rb') as jsonFile:
             self.data = json.load(jsonFile)
@@ -41,8 +58,18 @@ class Simulator:
         self.case = case
         self.database = Database(MICROGRID_DATA_FILE, self.grid)
         self.actions = {}
-        self.start_date = start_date
-        self.end_date = end_date
+
+        # converting dates to datetime object
+        if type(start_date) is str:
+            self.start_date = pd.to_datetime(start_date, infer_datetime_format=True).to_pydatetime()
+        else:
+            self.start_date = start_date
+
+        if type(end_date) is str:
+            self.end_date = pd.to_datetime(end_date, infer_datetime_format=True).to_pydatetime()
+        else:
+            self.end_date = end_date
+
         data_start_date = self.database.data_frame.first_valid_index()
         data_end_date = self.database.data_frame.last_valid_index()
         assert (self.start_date < self.end_date), "The end date is before the start date."
@@ -241,7 +268,7 @@ class Simulator:
                        avg_rewards=learning_results)
 
         if not os.path.isdir(self.RESULTS_FOLDER):
-            os.mkdir(self.RESULTS_FOLDER)
+            os.makedirs(self.RESULTS_FOLDER)
 
         with open(self.RESULTS_FILE, 'w') as jsonFile:
             json.dump(results, jsonFile)
