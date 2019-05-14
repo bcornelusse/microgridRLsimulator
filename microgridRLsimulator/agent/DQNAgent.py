@@ -70,8 +70,7 @@ class DQNAgent(Agent):
             return
 
         average_cumulative_reward = 0.0
-
-        for i in range(1, self.episodes):
+        for i in range(self.episodes):
             # Initialize the environment
             state = self.env.reset()
             cumulative_reward = 0.0
@@ -92,6 +91,7 @@ class DQNAgent(Agent):
 
                 # Get to the next state based on the high level action selected
                 next_state, reward, done = self.env.step(state, action)
+                #reward = self.reward_function(reward_info)
 
                 # Refactor the new state into a flat array (for convenience)
                 next_state_array = self.state_refactoring(next_state)
@@ -149,9 +149,10 @@ class DQNAgent(Agent):
                 state_array = self.state_refactoring(state)
                 action = np.argmax(self.model.predict(state_array.reshape(-1, self.state_size, 1)))
                 next_state, reward, done = self.env.step(state, action)
+                #reward = self.reward_function(reward_info)
                 cumulative_reward += reward
                 state = deepcopy(next_state)
-            print('i am in episode: %d and the reward is: %d.' % (i, cumulative_reward))
+            print('Finished simulation: %d and the reward is: %d.' % (i, cumulative_reward))
         # Pass the progress of the cumulative reward in order to plot the learning progress
         self.env.store_and_plot(learning_results=self.average_reward)
 
@@ -227,6 +228,17 @@ class DQNAgent(Agent):
         else:
             model = tflearn.DNN(network)
         return model
+
+    def reward_function(self, reward_info):
+        """
+        Method that transforms the reward infos into a reward value with the help of a reward function tuned by the user.
+
+        :param reward_info: dictionary that contains reward information relative to the chosen objectives 
+        (total_cost, fuel_cost, load_shedding, curtailment, storage_maintenance).
+        :return: reward value from a tuned reward function.
+        """
+        reward = - reward_info["total_cost"]
+        return reward
 
     def plot_progress(self):
         plt.figure()

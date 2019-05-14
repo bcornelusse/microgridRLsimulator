@@ -48,3 +48,6 @@ class Agent(object):
                                      axis=0)
 
         return state_array
+
+    def set_environment(self, env):
+        self.env = env

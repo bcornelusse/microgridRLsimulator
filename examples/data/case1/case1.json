@@ -1,0 +1,62 @@
+{
+  "loads": [
+    {
+      "name": "C1",
+      "capacity": 10.0
+    },
+    {
+      "name": "C2",
+      "capacity": 10.0
+    },
+    {
+      "name": "C3",
+      "capacity": 10.0
+    }
+  ],
+  "generators": [
+    {
+      "name": "EPV",
+      "capacity": 10.0,
+      "steerable": false,
+      "operating_point": [365, 0.97]
+    },
+    {
+      "name": "Diesel_1",
+      "capacity": 10.0,
+      "steerable": true,
+      "min_stable_generation": 0.25,
+      "diesel_price": 1
+    }
+  ],
+  "storages": [
+    {
+      "name": "BSS_1",
+      "type": "Storage",
+      "capacity": 12.0,
+      "max_charge_rate": 4.0,
+      "max_discharge_rate": 4.0,
+      "charge_efficiency": 0.90,
+      "discharge_efficiency": 0.89
+    },
+    {
+      "name": "BSS_2",
+      "type": "DCAStorage",
+      "capacity": 12.0,
+      "max_charge_rate": 3.0,
+      "max_discharge_rate": 3.0,
+      "charge_efficiency": 0.99,
+      "discharge_efficiency": 0.98,
+      "operating_point": [3000, 0.7]
+    }
+  ],
+  "objectives": {
+    "total_cost": true,
+    "fuel_cost": false,
+    "load_shedding": false,
+    "curtailment": false,
+    "storage_maintenance": false
+  },
+  "curtailement_price": 10.5,
+  "load_shedding_price":100,
+  "period_duration": 60
+}

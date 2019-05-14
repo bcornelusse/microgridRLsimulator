@@ -21,7 +21,7 @@ class Database:
         :param path_to_csv: Path to csv containing realized data
         :param grid: A Grid object describing the configuration of the microgridRLsimulator
         """
-        self._output_ = ['Price'] + grid.get_non_flexible_device_names()
+        self._output_ = grid.get_non_flexible_device_names() #+ ['Price'] # Add the price when working on-grid
         self.data_frame = self.read_data(path_to_csv)
 
     def read_data(self, path):
@@ -31,7 +31,7 @@ class Database:
         :param path: Path to the csv data file
         :return: A pandas dataframe
         """
-        df = pd.read_csv(path, sep=";", parse_dates=True, index_col='DateTime')
+        df = pd.read_csv(path, sep=";|,", parse_dates=True, index_col='DateTime', engine='python')
 
         df_col_names = list(df.columns.values)
 

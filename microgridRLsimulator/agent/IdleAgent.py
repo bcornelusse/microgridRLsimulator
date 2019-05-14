@@ -29,9 +29,20 @@ class IdleAgent(Agent):
                 # Take always the last action in the action space - Idle always
                 action = len(self.env.high_level_actions)-1
                 next_state, reward, done = self.env.step(state, action)
+                #reward = self.reward_function(reward_info)
                 cumulative_reward += reward
                 state = deepcopy(next_state)
             print('i am in episode: %d and the reward is: %d.' % (i, cumulative_reward))
         self.env.store_and_plot()
 
+    def reward_function(self, reward_info):
+        """
+        Method that transforms the reward infos into a reward value with the help of a reward function tuned by the user.
+
+        :param reward_info: dictionary that contains reward information relative to the chosen objectives 
+        (total_cost, fuel_cost, load_shedding, curtailment, storage_maintenance).
+        :return: reward value from a tuned reward function.
+        """
+        reward = - reward_info["total_cost"]
+        return reward
 agent_type = IdleAgent
