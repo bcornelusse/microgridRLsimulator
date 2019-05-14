@@ -4,14 +4,6 @@ Installation
 Be sure you have python 3.6 installed.
 Run ``install.sh``. This creates the python environment ``mgenv`` with the necessary requirements to run the application.
 
-To install as a python package, run ``pip install -e .``
-
-Gym wrapper
-=======================
-
-You can use the simulator as a [Gym environment](https://gym.openai.com/), see examples/env_demo.py
-
-
 Running the application
 =======================
 

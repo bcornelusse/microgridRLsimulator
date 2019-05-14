@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 
 plt.style.use('bmh')
 
@@ -19,11 +18,7 @@ class Plotter:
         self.results = results
         self.case = case
 
-        # self.dates = [datetime.strptime(d, "%Y-%m-%d %H:%M:%S") for d in results["dates"]]
-        try:
-            self.dates = [datetime.strptime(d, "%Y-%m-%d %H:%M:%S") for d in results["dates"]]
-        except ValueError:
-            self.dates = [pd.to_datetime(d, infer_datetime_format=True).to_pydatetime() for d in results["dates"]]
+        self.dates = [datetime.strptime(d, "%Y-%m-%d %H:%M:%S") for d in results["dates"]]
 
     def get_ticks(self, start, end):
         xstep = int(max(1, (end - start) / 24))
