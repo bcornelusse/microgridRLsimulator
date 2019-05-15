@@ -11,11 +11,13 @@ import numpy as np
 from gym import spaces
 from gym.utils import seeding
 from microgridRLsimulator.simulate import Simulator
-
+from datetime import datetime
+from datetime import timedelta
+import pandas as pd
 
 class MicrogridEnv(gym.Env):
 
-    def __init__(self, start_date='20150101T00:00:00', end_date='20150102T00:00:00', data_file='case1',
+    def __init__(self, start_date='2016-01-01 00:00:00', end_date='2017-07-31 23:55:00', data_file='elespino',
                  results_folder=None, results_file=None):
         """
         :param start_date: datetime for the start of the simulation
@@ -63,8 +65,9 @@ class MicrogridEnv(gym.Env):
             state = self.state
         state_formatted = self.state_formatting(state)
         next_state, reward, done = self.simulator.step(state_formatted, action)
-        # print(next_state)
         self.state = self.state_refactoring(next_state)
+
+        print(self.state)
 
         return np.array(self.state), reward, done, {}
 
@@ -75,9 +78,14 @@ class MicrogridEnv(gym.Env):
         :param state: State of the agent as a list
         :return: Flattened representation of the state as an array
         """
+        time = state[-1]
+
+        diff = time - self.simulator.start_date
+        diff_minutes = diff.days*24*60 + diff.seconds/60
+
         state_array = np.concatenate((np.array([state[0]]), np.array(state[1]).reshape(-1), np.array([state[2]])),
                                      axis=0)
-
+        state_array = np.hstack((state_array, diff_minutes))
         return state_array
 
     def state_formatting(self, state_array):
@@ -85,6 +93,10 @@ class MicrogridEnv(gym.Env):
         Inverse of state_refactoring
         """
         n = len(self.simulator.grid.storages)
-        state = [state_array[0],  state_array[1:1+n].tolist(),  state_array[-1]]
 
+        diff_minutes = state_array[-1]
+        delta_t = timedelta(minutes=diff_minutes)
+        time = pd.Timestamp(self.simulator.start_date + delta_t)
+
+        state = [state_array[0],  state_array[1:1+n].tolist(),  state_array[-1], time]
         return state

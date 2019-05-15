@@ -61,12 +61,12 @@ class Simulator:
 
         # converting dates to datetime object
         if type(start_date) is str:
-            self.start_date = pd.to_datetime(start_date, infer_datetime_format=True).to_pydatetime()
+            self.start_date = pd.to_datetime(start_date, infer_datetime_format=True)
         else:
             self.start_date = start_date
 
         if type(end_date) is str:
-            self.end_date = pd.to_datetime(end_date, infer_datetime_format=True).to_pydatetime()
+            self.end_date = pd.to_datetime(end_date, infer_datetime_format=True)
         else:
             self.end_date = end_date
 
