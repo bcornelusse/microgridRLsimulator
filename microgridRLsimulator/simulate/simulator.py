@@ -239,10 +239,11 @@ class Simulator:
         # Pass the information about the next state, cost of the previous control actions and termination condition 
         return self._decode_state(next_grid_state), self._compute_rewards(multiobj), is_terminal
 
-    def store_and_plot(self, learning_results=None):
+    def store_and_plot(self, result_folder=None, learning_results=None):
         """
         Store and plot results.
 
+        :param result_folder: self.RESULT_FOLDER can be overwritten with this parameter
         :param learning_results: A list containing the results of the learning progress
         :return: Nothing.
         """
@@ -266,6 +267,9 @@ class Simulator:
                        grid_import=[d.grid_import for d in self.grid_states],
                        grid_export=[d.grid_export for d in self.grid_states],
                        avg_rewards=learning_results)
+
+        if result_folder is not None:
+            self.RESULTS_FOLDER = result_folder
 
         if not os.path.isdir(self.RESULTS_FOLDER):
             os.makedirs(self.RESULTS_FOLDER)
