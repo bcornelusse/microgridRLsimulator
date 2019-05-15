@@ -11,7 +11,6 @@ import numpy as np
 from gym import spaces
 from gym.utils import seeding
 from microgridRLsimulator.simulate import Simulator
-from datetime import datetime
 from datetime import timedelta
 import pandas as pd
 
@@ -66,8 +65,6 @@ class MicrogridEnv(gym.Env):
         state_formatted = self.state_formatting(state)
         next_state, reward, done = self.simulator.step(state_formatted, action)
         self.state = self.state_refactoring(next_state)
-
-        print(self.state)
 
         return np.array(self.state), reward, done, {}
 
