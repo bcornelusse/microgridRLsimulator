@@ -28,6 +28,7 @@ from microgridRLsimulator.agent.DQNAgent import DQNAgent
 from microgridRLsimulator.agent.RandomAgent import RandomAgent
 from microgridRLsimulator.agent.HeuristicAgent import HeuristicAgent
 from microgridRLsimulator.simulate.simulator import Simulator
+from microgridRLsimulator.gym_wrapper import MicrogridEnv
 from docopt import docopt
 import logging
 from dateutil.parser import isoparse
@@ -62,8 +63,8 @@ if __name__ == '__main__':
     train_end_date = isoparse(args['--train_to_date'])
     test_start_date = isoparse(args['--test_from_date'])
     test_end_date = isoparse(args['--test_to_date'])
-    TrainSimulationEnvironment = Simulator(train_start_date, train_end_date, case)
-    TestSimulationEnvironment = Simulator(test_start_date, test_end_date, case)
+    TrainSimulationEnvironment = MicrogridEnv(train_start_date, train_end_date, case)
+    TestSimulationEnvironment = MicrogridEnv(test_start_date, test_end_date, case)
 
     # Configure the agent (--agent case)
     if args['--agent_file'] is None:

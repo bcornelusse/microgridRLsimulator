@@ -63,7 +63,7 @@ class MicrogridEnv(gym.Env):
         if state is None:
             state = self.state
         state_formatted = self.state_formatting(state)
-        next_state, reward, done = self.simulator.step(state_formatted, action)
+        next_state, reward, done = self.simulator.step(high_level_action = action, state = state_formatted)
         self.state = self.state_refactoring(next_state)
 
         return np.array(self.state), reward, done, {}

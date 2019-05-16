@@ -9,9 +9,10 @@ class Agent(object):
 
     def __init__(self, env):
         self.env = env
-        self.num_actions = len(self.env.high_level_actions)
-        self.state_size = 2 + len(self.env.grid.storages)  # TODO 2 + comes from production and load (to be generalized)
-
+        self.num_actions = self.env.action_space.n
+        self.state_size = 2 + len(self.env.simulator.grid.storages)  # TODO Check size for dates
+        # TODO self.state_size = env.observation_space.shape[0]
+        
     def run(self):
         """
         Method that is launched in order to train and simulate the agent

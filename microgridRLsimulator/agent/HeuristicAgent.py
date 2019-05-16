@@ -33,17 +33,17 @@ class HeuristicAgent(Agent):
                 nb_storage = len(state[1])
                 net_gen = production - consumption
                 if positive(net_gen):
-                    action = self.env.high_level_actions.index(tuple('C' for x in range(nb_storage))) # Charge action for all storages
+                    action = self.env.simulator.high_level_actions.index(tuple('C' for x in range(nb_storage))) # Charge action for all storages
                 elif negative(net_gen):
-                    action = self.env.high_level_actions.index(tuple('D' for x in range(nb_storage)))
+                    action = self.env.simulator.high_level_actions.index(tuple('D' for x in range(nb_storage)))
                 else:
-                    action = self.env.high_level_actions.index(tuple('I' for x in range(nb_storage)))
-                next_state, reward, done = self.env.step(state, action)
+                    action = self.env.simulator.high_level_actions.index(tuple('I' for x in range(nb_storage)))
+                next_state, reward, done, info = self.env.step(state = state, action= action)
                 # reward = self.reward_function(reward_info)
                 cumulative_reward += reward
                 state = deepcopy(next_state)
-            print('Finished simulation: %d and the reward is: %d.' % (i, cumulative_reward))
-        self.env.store_and_plot()
+            print('Finished simulation - the reward is: %d.' % (cumulative_reward))
+        self.env.simulator.store_and_plot()
     
     def reward_function(self, reward_info):
         """
