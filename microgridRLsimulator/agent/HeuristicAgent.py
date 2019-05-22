@@ -24,13 +24,11 @@ class HeuristicAgent(Agent):
             state = self.env.reset()
             cumulative_reward = 0.0
             done = False
-
             while not done:
-                state_array = self.state_refactoring(state)
                 # Charge if production > demand, discharge if production < demand, Idle otherwise
                 consumption = state[0]
-                production = state[2]
-                nb_storage = len(state[1])
+                nb_storage = len(state) - 3 #  3 for prod, cons, delta_t
+                production = state[nb_storage + 1]
                 net_gen = production - consumption
                 if positive(net_gen):
                     action = self.env.simulator.high_level_actions.index(tuple('C' for x in range(nb_storage))) # Charge action for all storages
@@ -42,7 +40,7 @@ class HeuristicAgent(Agent):
                 # reward = self.reward_function(reward_info)
                 cumulative_reward += reward
                 state = deepcopy(next_state)
-            print('Finished simulation - the reward is: %d.' % (cumulative_reward))
+            print('Finished simulation: %d and the reward is: %d.' % (i, cumulative_reward))
         self.env.simulator.store_and_plot()
     
     def reward_function(self, reward_info):

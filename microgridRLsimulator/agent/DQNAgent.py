@@ -79,32 +79,25 @@ class DQNAgent(Agent):
             short_term_memory = []
 
             while not done:
-                # Refactor the state into a flat array (for convenience)
-                state_array = self.state_refactoring(state)
-
                 # Take e-greedy actions based
                 if random.random() < self.eps:
                     action = random.randrange(0, self.num_actions)
                 else:
                     # the flat array is used for the forward pass in the NN
-                    action = np.argmax(self.model.predict(state_array.reshape(-1, self.state_size, 1)))
+                    action = np.argmax(self.model.predict(state.reshape(-1, self.state_size, 1)))
 
                 # Get to the next state based on the high level action selected
                 next_state, reward, done, info = self.env.step(state = state, action = action)
                 #reward = self.reward_function(reward_info)
-
-                # Refactor the new state into a flat array (for convenience)
-                next_state_array = self.state_refactoring(next_state)
-
                 cumulative_reward += reward
-                logger.info(state_array)
-                logger.info(self.model.predict(state_array.reshape(-1, self.state_size, 1)))
+                logger.info(state)
+                logger.info(self.model.predict(state.reshape(-1, self.state_size, 1)))
 
                 # Update the short term memory for the online learning
-                short_term_memory.append([state_array, action, reward, next_state_array, done])
+                short_term_memory.append([state, action, reward, next_state, done])
 
                 # Update the long term memory for the experience replay
-                self.long_term_memory.append([state_array, action, reward, next_state_array, done])
+                self.long_term_memory.append([state, action, reward, next_state, done])
 
                 state = deepcopy(next_state)
                 if done:
@@ -112,9 +105,9 @@ class DQNAgent(Agent):
                         i, cumulative_reward, self.eps))
 
             # Create some plots every 1500 episodes to visualise the progress of training
-            if i % 1500 == 0:
-                self.env.simulator.store_and_plot()
-
+            # if i % 1500 == 0:
+            #     self.env.simulator.store_and_plot()
+                
             # On-line training of the NN
             if len(short_term_memory) > self.batch_size:
                 self._train(short_term_memory)
@@ -146,13 +139,12 @@ class DQNAgent(Agent):
             done = False
 
             while not done:
-                state_array = self.state_refactoring(state)
-                action = np.argmax(self.model.predict(state_array.reshape(-1, self.state_size, 1)))
+                action = np.argmax(self.model.predict(state.reshape(-1, self.state_size, 1)))
                 next_state, reward, done, info = self.env.step(state = state, action = action)
                 #reward = self.reward_function(reward_info)
                 cumulative_reward += reward
                 state = deepcopy(next_state)
-            print('Finished simulation - the reward is: %d.' % (cumulative_reward))
+            print('Finished simulation: %d and the reward is: %d.' % (i, cumulative_reward))
         # Pass the progress of the cumulative reward in order to plot the learning progress
         self.env.simulator.store_and_plot(learning_results=self.average_reward)
 

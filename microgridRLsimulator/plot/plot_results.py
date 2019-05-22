@@ -101,7 +101,7 @@ class Plotter:
             ax2.set_ylabel('kW', fontsize=FONT_SIZE)
             ax2.plot(discharge, label="Discharge", drawstyle='steps-post')
             ax2.plot(charge, label="Charge", drawstyle='steps-post')
-            ax2.set_ylim([min(charge) * 1.1, max(discharge) * 1.1])
+            ax2.set_ylim([min(charge) * 1.1 - 1e-3, max(discharge) * 1.1 + 1e-3])
             ax2.legend(fontsize=FONT_SIZE)
             # ax2.axhline(y=0, color='k', lw=0.5)
 
@@ -138,7 +138,7 @@ class Plotter:
         ax2.fill_between(range(len(energy_cost)),fuel_cost, label="Fuel cost", step="post")
         ax2.fill_between(range(len(energy_cost)),fuel_cost,fuel_cost+curtailment_cost, label="Curtailment cost", step="post")
         ax2.fill_between(range(len(energy_cost)),fuel_cost+curtailment_cost,fuel_cost+curtailment_cost+load_not_served_cost, label="Lost load cost", step="post")
-        ax2.set_ylim([min(energy_cost) * 1.1, max(energy_cost) * 1.1])
+        ax2.set_ylim([min(energy_cost) * 1.1 - 1e-3, max(energy_cost) * 1.1 + 1e-3])
         ax2.legend(fontsize=FONT_SIZE)
         # ax2.axhline(y=0, color='k', lw=0.5)
 

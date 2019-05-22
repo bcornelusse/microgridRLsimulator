@@ -16,8 +16,7 @@ import pandas as pd
 
 class MicrogridEnv(gym.Env):
 
-    def __init__(self, start_date='2016-01-01 00:00:00', end_date='2017-07-31 23:55:00', data_file='elespino',
-                 results_folder=None, results_file=None):
+    def __init__(self, start_date, end_date, data_file):
         """
         :param start_date: datetime for the start of the simulation
         :param end_date: datetime for the end of the simulation
@@ -28,9 +27,7 @@ class MicrogridEnv(gym.Env):
 
         self.simulator = Simulator(start_date,
                                    end_date,
-                                   data_file,
-                                   results_folder=results_folder,
-                                   results_file=results_file)
+                                   data_file)
         self.state = None
         self.action_space = spaces.Discrete(len(self.simulator.high_level_actions))
 
@@ -48,10 +45,10 @@ class MicrogridEnv(gym.Env):
 
     def reset(self, state=None):
         if state is None:
-            self.state = self.state_refactoring(self.simulator.reset())
+            self.state = self.simulator.reset()
         else:
             self.state = state
-        return np.array(self.state)
+        return np.array(self.state_refactoring(self.state))
 
     def step(self, action, state=None):
         """
@@ -75,25 +72,22 @@ class MicrogridEnv(gym.Env):
         :param state: State of the agent as a list
         :return: Flattened representation of the state as an array
         """
-        time = state[-1]
-
-        diff = time - self.simulator.start_date
-        diff_minutes = diff.days*24*60 + diff.seconds/60
-
-        state_array = np.concatenate((np.array([state[0]]), np.array(state[1]).reshape(-1), np.array([state[2]])),
+        consumption = state[0]
+        storages_soc = state[1]
+        production = state[2]
+        delta_t = state[3]
+        state_array = np.concatenate((np.array([consumption]), np.array(storages_soc).reshape(-1), np.array([production]), np.array([delta_t])),
                                      axis=0)
-        state_array = np.hstack((state_array, diff_minutes))
         return state_array
 
     def state_formatting(self, state_array):
         """
         Inverse of state_refactoring
         """
-        n = len(self.simulator.grid.storages)
-
-        diff_minutes = state_array[-1]
-        delta_t = timedelta(minutes=diff_minutes)
-        time = pd.Timestamp(self.simulator.start_date + delta_t)
-
-        state = [state_array[0],  state_array[1:1+n].tolist(),  state_array[-1], time]
+        n= len(self.simulator.grid.storages)
+        consumption = state_array[0]
+        storages_soc = list(state_array[1:1+n])
+        production = state_array[n + 1]
+        delta_t = state_array[n + 2]
+        state = [consumption, storages_soc, production, delta_t]
         return state

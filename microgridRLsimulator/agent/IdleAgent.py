@@ -25,14 +25,13 @@ class IdleAgent(Agent):
             done = False
 
             while not done:
-                state_array = self.state_refactoring(state)
                 # Take always the last action in the action space - Idle always
                 action = len(self.env.simulator.high_level_actions)-1
                 next_state, reward, done, info = self.env.step(state = state, action = action)
                 #reward = self.reward_function(reward_info)
                 cumulative_reward += reward
                 state = deepcopy(next_state)
-            print('Finished  episode - the reward is: %d.' % (cumulative_reward))
+            print('i am in episode: %d and the reward is: %d.' % (i, cumulative_reward))
         self.env.simulator.store_and_plot()
 
     def reward_function(self, reward_info):

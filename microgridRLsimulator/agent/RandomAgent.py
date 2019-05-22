@@ -25,14 +25,13 @@ class RandomAgent(Agent):
             done = False
 
             while not done:
-                state_array = self.state_refactoring(state)
                 # Take a random action from the action space
                 action = self.env.action_space.sample()
                 next_state, reward, done, info = self.env.step(state = state, action = action)
                 #reward = self.reward_function(reward_info)
                 cumulative_reward += reward
                 state = deepcopy(next_state)
-            print('Finished simulation - the reward is: %d.' % (cumulative_reward))
+            print('Finished simulation: %d and the reward is: %d.' % (i, cumulative_reward))
         self.env.simulator.store_and_plot()
 
     def reward_function(self, reward_info):

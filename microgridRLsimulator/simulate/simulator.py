@@ -6,6 +6,7 @@ from datetime import datetime
 import os
 import itertools
 from datetime import timedelta
+from dateutil.parser import isoparse
 
 from microgridRLsimulator.history import Database
 from microgridRLsimulator.simulate.gridstate import GridState
@@ -16,36 +17,22 @@ from microgridRLsimulator.utils import positive, negative
 
 
 class Simulator:
-    def __init__(self, start_date, end_date, case,
-                 results_folder=None,
-                 results_file=None):
+    def __init__(self, start_date, end_date, case):
         """
         :param start_date: datetime for the start of the simulation
         :param end_date: datetime for the end of the simulation
         :param case: case name (string)
-        :param results_folder: if None, set to default location
-        :param results_file: if None, set to default file
+        :param decision_horizon:
         """
 
         this_dir, _ = os.path.split(__file__)
         package_dir = os.path.dirname(this_dir)
-        parent_package_dir = os.path.dirname(package_dir)
 
         MICROGRID_CONFIG_FILE = os.path.join(package_dir, "data", case, "%s.json" % case)
         MICROGRID_DATA_FILE = os.path.join(package_dir, "data", case, '%s_dataset.csv' % case)
-        # setting results folder
-        if results_folder is None:
-            self.RESULTS_FOLDER = "results/results_%s_%s" % (
-                case, datetime.now().strftime('%Y-%m-%d_%H%M%S'))
-            self.RESULTS_FOLDER = os.path.join(parent_package_dir, self.RESULTS_FOLDER)
-        else:
-            self.RESULTS_FOLDER = results_folder
-
-        # setting results file
-        if results_file is None:
-            self.RESULTS_FILE = "%s/%s_out.json" % (self.RESULTS_FOLDER, case)
-        else:
-            self.RESULTS_FILE = results_file
+        self.RESULTS_FOLDER = "results/results_%s_%s" % (
+            case, datetime.now().strftime('%Y-%m-%d_%H%M%S'))
+        self.RESULTS_FILE = "%s/%s_out.json" % (self.RESULTS_FOLDER, case)
 
         with open(MICROGRID_CONFIG_FILE, 'rb') as jsonFile:
             self.data = json.load(jsonFile)
@@ -58,15 +45,13 @@ class Simulator:
         self.case = case
         self.database = Database(MICROGRID_DATA_FILE, self.grid)
         self.actions = {}
-
-        # converting dates to datetime object
+        # converting dates to datetime object      
         if type(start_date) is str:
-            self.start_date = pd.to_datetime(start_date, infer_datetime_format=True)
+            self.start_date = isoparse(start_date)
         else:
             self.start_date = start_date
-
         if type(end_date) is str:
-            self.end_date = pd.to_datetime(end_date, infer_datetime_format=True)
+            self.end_date = isoparse(end_date)
         else:
             self.end_date = end_date
 
@@ -108,7 +93,6 @@ class Simulator:
         # Add in the state the information about renewable generation and demand
         self.grid_states[-1].non_steerable_production = realized_non_flexible_production
         self.grid_states[-1].non_steerable_consumption = realized_non_flexible_consumption
-
         return self._decode_state(self.grid_states[-1])
 
     def step(self, state, high_level_action):
@@ -242,8 +226,8 @@ class Simulator:
     def store_and_plot(self, folder=None, learning_results=None):
         """
         Store and plot results.
-        
-        :param simulation_folder: The simulation folder name.
+
+        :param folder: The simulation folder name.    
         :param learning_results: A list containing the results of the learning progress
         :return: Nothing.
         """
@@ -267,7 +251,7 @@ class Simulator:
                        grid_import=[d.grid_import for d in self.grid_states],
                        grid_export=[d.grid_export for d in self.grid_states],
                        avg_rewards=learning_results)
-
+        
         if folder is not None:
             self.RESULTS_FOLDER = folder
             self.RESULTS_FILE = "%s/%s_out.json" % (self.RESULTS_FOLDER, self.case)
@@ -303,10 +287,13 @@ class Simulator:
         making process.
 
         :param gridstate: Gridstate object that contains the whole information about the micro-grid
-        :return: list of the type [ non_flex_consumption , [state_of_charge_0, state_of_charge_1,...] , non_flex_production, date_time]
+        :return: list of the type [ non_flex_consumption , [state_of_charge_0, state_of_charge_1,...] , non_flex_production, nb_hours (from 1 jan of this year)]
         """
+        first_jan = datetime(gridstate.date_time.year,1,1,00,00,00)
+        delta_s = (gridstate.date_time - first_jan).total_seconds() # difference in seconds
+        delta_h = divmod(delta_s, 3600)[0] # difference in hours
         return [gridstate.non_steerable_consumption, gridstate.state_of_charge,
-                gridstate.non_steerable_production, gridstate.date_time]  # TODO AgentState object?
+                gridstate.non_steerable_production, delta_h]  # TODO AgentState object?
     
     def _construct_action(self, high_level_action, state):
         """
@@ -322,7 +309,6 @@ class Simulator:
         generation = {g: 0. for g in self.grid.generators}
         charge = [0. for b in range(n_storages)]
         discharge = [0. for b in range(n_storages)]
-
         consumption = state[0]
         state_of_charge = state[1]
         non_flex_production = state[2]

@@ -27,8 +27,7 @@ from microgridRLsimulator.agent.IdleAgent import IdleAgent
 from microgridRLsimulator.agent.DQNAgent import DQNAgent
 from microgridRLsimulator.agent.RandomAgent import RandomAgent
 from microgridRLsimulator.agent.HeuristicAgent import HeuristicAgent
-from microgridRLsimulator.simulate.simulator import Simulator
-from microgridRLsimulator.gym_wrapper import MicrogridEnv
+from microgridRLsimulator.gym_wrapper.microgrid_env import MicrogridEnv
 from docopt import docopt
 import logging
 from dateutil.parser import isoparse

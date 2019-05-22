@@ -10,9 +10,9 @@ class Agent(object):
     def __init__(self, env):
         self.env = env
         self.num_actions = self.env.action_space.n
-        self.state_size = 2 + len(self.env.simulator.grid.storages)  # TODO Check size for dates
+        self.state_size = 3 + len(self.env.simulator.grid.storages)  # TODO Check size for dates
         # TODO self.state_size = env.observation_space.shape[0]
-        
+
     def run(self):
         """
         Method that is launched in order to train and simulate the agent
@@ -45,7 +45,7 @@ class Agent(object):
         :param state: State of the agent as a list
         :return: Flattened representation of the state as an array
         """
-        state_array = np.concatenate((np.array([state[0]]), np.array(state[1]).reshape(-1), np.array([state[2]])),
+        state_array = np.concatenate((np.array([state[0]]), np.array(state[1]).reshape(-1), np.array([state[2]]), np.array([state[3]])),
                                      axis=0)
 
         return state_array
