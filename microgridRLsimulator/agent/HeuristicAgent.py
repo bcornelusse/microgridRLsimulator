@@ -41,7 +41,7 @@ class HeuristicAgent(Agent):
                 cumulative_reward += reward
                 state = deepcopy(next_state)
             print('Finished simulation: %d and the reward is: %d.' % (i, cumulative_reward))
-        self.env.simulator.store_and_plot()
+        #self.env.simulator.store_and_plot()
     
     def reward_function(self, reward_info):
         """

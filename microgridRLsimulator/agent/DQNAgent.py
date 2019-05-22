@@ -146,7 +146,7 @@ class DQNAgent(Agent):
                 state = deepcopy(next_state)
             print('Finished simulation: %d and the reward is: %d.' % (i, cumulative_reward))
         # Pass the progress of the cumulative reward in order to plot the learning progress
-        self.env.simulator.store_and_plot(learning_results=self.average_reward)
+        #self.env.simulator.store_and_plot(learning_results=self.average_reward) #Plots in Delta repo
 
     def _train(self, memory, n_epochs=10):
         """

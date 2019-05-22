@@ -32,7 +32,7 @@ class IdleAgent(Agent):
                 cumulative_reward += reward
                 state = deepcopy(next_state)
             print('i am in episode: %d and the reward is: %d.' % (i, cumulative_reward))
-        self.env.simulator.store_and_plot()
+        #self.env.simulator.store_and_plot()
 
     def reward_function(self, reward_info):
         """
