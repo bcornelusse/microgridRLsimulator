@@ -1,7 +1,7 @@
 from microgridRLsimulator.model.device import Device
 from microgridRLsimulator.simulate import simulator
-from microgridRLsimulator.utils import positive
-
+from microgridRLsimulator.utils import positive, TOL_IS_ZERO
+import numpy as np
 
 class Storage(Device):
     def __init__(self, name, params):
@@ -44,10 +44,10 @@ class Storage(Device):
         # Take care of potential simultaneous charge and discharge.
         if positive(charge_action) and positive(discharge_action):
             net = charge_action - discharge_action
-            if net > simulator.TOL_IS_ZERO:
+            if net > TOL_IS_ZERO:
                 actual_charge = net
                 actual_discharge = 0.0
-            elif net < -simulator.TOL_IS_ZERO:
+            elif net < -TOL_IS_ZERO:
                 actual_charge = 0
                 actual_discharge = -net
         return actual_charge, actual_discharge

@@ -25,7 +25,9 @@
       "capacity": 10.0,
       "steerable": true,
       "min_stable_generation": 0.25,
-      "diesel_price": 1
+      "diesel_price": 1,
+      "operating_point_1": [75, 22.5],
+      "operating_point_2": [25, 10.5]
     }
   ],
   "storages": [
@@ -47,6 +49,7 @@
       "charge_efficiency": 0.99,
       "discharge_efficiency": 0.98,
       "operating_point": [3000, 0.7]
+      
     }
   ],
   "objectives": {
@@ -56,7 +59,13 @@
     "curtailment": false,
     "storage_maintenance": false
   },
-  "curtailement_price": 10.5,
+  "curtailment_price": 10.5,
   "load_shedding_price":100,
-  "period_duration": 60
+  "period_duration": 60,
+  "features": {"state_of_charge": true, "n_cycles": false, "capacities": false, "res_gen_capacities": false,
+    "non_steerable_consumption": true, "non_steerable_production": true,"delta_h": true},
+  "action_space": "Discrete",
+  "backcast_steps": 1,
+  "forecast_steps" : 2,
+  "forecast_type": "noisy"
 }

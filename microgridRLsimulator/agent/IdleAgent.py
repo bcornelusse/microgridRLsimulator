@@ -4,12 +4,14 @@ from microgridRLsimulator.agent.agent import Agent
 
 import numpy as np
 from copy import deepcopy
+from microgridRLsimulator.utils import time_string_for_storing_results
 
 
 class IdleAgent(Agent):
 
-    def __init__(self, env):
+    def __init__(self, env, n_test_episodes=1):
         super().__init__(env)
+        self.n_test_episodes = n_test_episodes
     
     @staticmethod
     def name():
@@ -18,8 +20,8 @@ class IdleAgent(Agent):
     def train_agent(self):
         pass #Nothing to train the Idle agent with
 
-    def simulate_agent(self, simulation_steps=1):
-        for i in range(1, simulation_steps + 1):
+    def simulate_agent(self, agent_options=None):
+        for i in range(1, self.n_test_episodes + 1):
             state = self.env.reset()
             cumulative_reward = 0.0
             done = False
@@ -32,7 +34,12 @@ class IdleAgent(Agent):
                 cumulative_reward += reward
                 state = deepcopy(next_state)
             print('i am in episode: %d and the reward is: %d.' % (i, cumulative_reward))
-        #self.env.simulator.store_and_plot()
+            self.env.simulator.store_and_plot(
+                folder="results/" + self.name() + "/" + self.env.simulator.case + "/" + time_string_for_storing_results(
+                    self.name() + "_" + self.env.purpose + "_from_" + self.env.simulator.start_date.strftime(
+                        "%m-%d-%Y") + "_to_" + self.env.simulator.end_date.strftime("%m-%d-%Y"),
+                    self.env.simulator.case) + "_" + str(i), agent_options=agent_options)
+
 
     def reward_function(self, reward_info):
         """

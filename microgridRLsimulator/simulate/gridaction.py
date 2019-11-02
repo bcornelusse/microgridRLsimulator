@@ -2,7 +2,7 @@
 
 
 class GridAction():
-    def __init__(self, conventional_generation, charge, discharge):
+    def __init__(self, conventional_generation=None, charge=None, discharge=None):
         """
         Action taken by the agent.
 
@@ -20,3 +20,8 @@ class GridAction():
 
     def to_json(self):
         return self.__dict__
+
+    def to_list(self):
+        action_list = [self.charge, self.discharge, list(self.conventional_generation.values())]
+        action_list = [item for sublist in action_list for item in sublist]
+        return action_list

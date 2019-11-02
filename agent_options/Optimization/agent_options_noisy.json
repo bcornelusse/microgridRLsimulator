@@ -1,0 +1,11 @@
+{
+  "Optimization": {
+    "n_test_episodes": 1,
+    "control_horizon": 12,
+    "simulation_horizon": 1,
+    "save_data": false,
+    "path_to_store_experience": "experience_data",
+    "forecast_type": "noisy",
+    "options_filename": "agent_options_noisy"
+  }
+}

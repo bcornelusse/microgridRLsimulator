@@ -1,0 +1,53 @@
+{
+  "loads": [
+    {
+      "name": "C1",
+      "capacity": 20.0
+    }
+  ],
+  "generators": [
+    {
+      "name": "EPV",
+      "capacity": 240.0,
+      "steerable": false,
+      "operating_point": [365, 0.97]
+    },
+    {
+      "name": "Diesel_1",
+      "capacity": 58.0,
+      "steerable": true,
+      "min_stable_generation": 0.80,
+      "diesel_price": 1,
+      "operating_point_1": [75, 22.5],
+      "operating_point_2": [25, 10.5]
+    }
+  ],
+  "storages": [
+    {
+      "name": "BSS_1",
+      "type": "DCAStorage",
+      "capacity": 468.0,
+      "max_charge_rate": 97.0,
+      "max_discharge_rate": 97.0,
+      "charge_efficiency": 0.75,
+      "discharge_efficiency": 0.75,
+      "operating_point": [3000, 0.7]
+    }
+  ],
+  "objectives": {
+    "total_cost": true,
+    "fuel_cost": false,
+    "load_shedding": false,
+    "curtailment": false,
+    "storage_maintenance": false
+  },
+  "curtailment_price": 10.5,
+  "load_shedding_price":100,
+  "period_duration": 60,
+  "features": {"state_of_charge": true, "n_cycles": true, "capacities": true, "res_gen_capacities": true,
+      "non_steerable_consumption": true, "non_steerable_production": true,"delta_h": true},
+  "action_space": "Continuous",
+  "backcast_steps": 12,
+  "forecast_steps" : 0,
+  "forecast_type": "noisy"
+}

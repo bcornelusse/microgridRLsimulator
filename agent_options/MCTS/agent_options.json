@@ -1,0 +1,5 @@
+{
+    "MCTS": {
+        "n_test_episodes": 1
+    }
+  }

@@ -5,8 +5,10 @@ and a controller, evaluates the decisions of the controller on the realized data
 
 from .simulator import Simulator
 from .gridstate import GridState
+from .forecaster import Forecaster
 
 __all__ = [
     'Simulator',
-    'GridState'
+    'GridState',
+    'Forecaster'
 ]

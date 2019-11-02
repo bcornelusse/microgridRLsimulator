@@ -22,7 +22,7 @@ class Grid:
 
         self.period_duration = data["period_duration"] / 60  # minutes -> hours
 
-        self.curtailement_price = data["curtailement_price"]
+        self.curtailment_price = data["curtailment_price"]
         self.load_shedding_price = data["load_shedding_price"]
 
     @property

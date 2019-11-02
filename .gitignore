@@ -1,15 +1,10 @@
 docs/_build
 examples/results
 models/
+experience_data/
 log/
 venv/
 results/
-
-build/
-dist/
-*.egg-info
-
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -17,3 +12,10 @@ mgenv
 results
 .idea/
 .vscode/settings.json
+.vscode/
+*.log
+*.png
+*.ipynb
+microgridRLsimulator.egg-info/
+microgrid_tensorboard/
+/profiling/

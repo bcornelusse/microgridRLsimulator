@@ -5,6 +5,9 @@ numpy==1.15.4
 pandas==0.23.4
 scipy==1.1.0
 tensorflow==1.12.0
-tflearn==0.3.2
+Pyomo==5.6.2
+stable-baselines==2.7.0
 sphinx
 gym
+sklearn
+git+https://github.com/openai/baselines

@@ -1,0 +1,24 @@
+{
+
+  "DQN":{
+    "n_test_episodes": 1,
+    "n_episodes": 1,
+    "gamma": 0.99,
+    "learning_rate": 0.0005,
+    "buffer_size": 50000,
+    "exploration_fraction": 0.1,
+    "exploration_final_eps": 0.02,
+    "train_freq": 1,
+    "batch_size": 64,
+    "checkpoint_freq": null,
+    "learning_starts": 512,
+    "target_network_update_freq": 500,
+    "prioritized_replay": true,
+    "prioritized_replay_alpha": 0.6,
+    "prioritized_replay_beta0": 0.4,
+    "prioritized_replay_eps": 1e-06,
+    "param_noise": false,
+    "options_filename": "agent_options",
+    "load_path": null
+  }
+}

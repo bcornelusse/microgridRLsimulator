@@ -1,0 +1,21 @@
+{
+
+  "PPO":{
+    "n_test_episodes": 5,
+    "n_episodes": 10,
+    "reccurent_policies": false,
+    "gamma":0.99,
+    "n_steps": 256,
+    "ent_coef": 0.01,
+    "learning_rate":2.5e-4,
+    "vf_coef": 0.5,
+    "max_grad_norm": 0.5, 
+    "lam": 0.95,
+    "nminibatches": 1,
+    "noptepochs": 4,
+    "cliprange": 0.2,
+    "n_cpu": null,
+    "options_filename": "agent_options",
+    "net_arch" : [24,12]
+  }
+}

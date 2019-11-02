@@ -1,1 +1,1 @@
-from .microgrid_env import MicrogridEnv
+from microgridRLsimulator.gym_wrapper.microgrid_env import MicrogridEnv

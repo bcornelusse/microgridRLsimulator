@@ -1,4 +1,4 @@
-from microgridRLsimulator.model.device import Device
+from .device import Device
 
 
 class Generator(Device):
@@ -15,14 +15,15 @@ class Generator(Device):
         self.capacity = None
         self.steerable = False
         self.min_stable_generation = None
-        self.diesel_price = None  # €/kWh
+        self.diesel_price = None  # €/l
         self.initial_capacity = params["capacity"]
-        self.operating_point = None
+        self.operating_point = None # EPV
+
 
         # In oder to determine the efficiency we need two operating points
         # It is considered that the fuel curve is linear (HOMER)
-        self.first_point = [75, 22.5]  # consumes 22.5 l/h at a generation of 75 kW
-        self.second_point = [25, 10.5]  # consumes 10.5 l/h at a generation of 25 kW
+        self.operating_point_1 = None  # Diesel
+        self.operating_point_2 = None  # Diesel
 
         for k in params.keys():
             if k in self.__dict__.keys():
@@ -39,10 +40,18 @@ class Generator(Device):
         """
         self.capacity = self.initial_capacity * (self.operating_point[1] - 1) * time / (24 * 60 * self.operating_point[0]) + self.initial_capacity
 
-    def simulate_generator(self, production):
-        TOL_IS_ZERO = 1e-4
+    def find_capacity(self, time):
+        """
 
-        simulation_resolution = 1  # hour
+        Calculate the generator capacity at the next step.
+
+        :return: The capacity without updating it. Useful for lookahead.
+        """
+        return (self.initial_capacity * (self.operating_point[1] - 1) * time / (24 * 60 * self.operating_point[0]) + self.initial_capacity)
+        
+
+    def simulate_generator(self, production, simulation_resolution):
+        TOL_IS_ZERO = 1e-4
 
         diesel_lhv = 43.2  # MJ/kg
         diesel_density = 820  # kg/l
@@ -50,14 +59,14 @@ class Generator(Device):
 
         min_stable_generation = self.capacity * self.min_stable_generation
 
-        slope = (self.first_point[1] - self.second_point[1]) / (self.first_point[0] - self.second_point[0])
-        intercept = self.second_point[1] - self.second_point[0] * slope
+        slope = (self.operating_point_1[1] - self.operating_point_2[1]) / (self.operating_point_1[0] - self.operating_point_2[0])
+        intercept = self.operating_point_2[1] - self.operating_point_2[0] * slope
         F_0 = intercept / self.capacity
         F_1 = slope
 
         diesel_consumption_l = 0
 
-        if TOL_IS_ZERO < production < min_stable_generation:
+        if TOL_IS_ZERO < production < min_stable_generation: # TODO This is already verified in construct action, check if this should be removed. Though in continuous action space, construct action method is not used
             genset_generation = min_stable_generation
         elif production > self.capacity:
             genset_generation = self.capacity
