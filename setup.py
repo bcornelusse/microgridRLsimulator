@@ -13,6 +13,6 @@ setup(name='microgridRLsimulator',
       packages=packages,
       install_requires=[
         'python-dateutil', 'docopt==0.6.2', 'matplotlib==3.0.2', 'numpy==1.15.4',
-        'pandas==0.23.4', 'scipy==1.1.0', 'tensorflow==1.12.0', 'tflearn==0.3.2', 'sphinx', 'gym'
+        'pandas==0.23.4', 'scipy==1.1.0', 'tensorflow==2.5.2', 'tflearn==0.3.2', 'sphinx', 'gym'
       ],
       zip_safe=False)
